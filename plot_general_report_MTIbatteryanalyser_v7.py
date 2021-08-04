@@ -14,11 +14,27 @@ import numpy as np
 import pandas as pd
 import os
 
-os.chdir(r'/home/jay/Desktop/LFP coin cell/01 LFP half cell')
+# --> Enter the path for the excel sheet within the quotes #
+path = r"/mnt/01D32FA04B3DCAD0/Thermal Runaway Sensor Data/02 Thermal Runaway/03 LFP Graphite cells/LFP Graphite cell data/03 LFP Graphite full cell"
+
+# --> Enter the file name for the excel sheet within the quotes #
+filename = 'CC52_2021-07-07_v1.xls'
+
+# --> Enter 'name', 'title' and 'active_material_weight' based on the data
+name = 'CC52'           # Cell identification
+title = 'LFP Graphite cell' + " "    # Cell type
+active_material_weight = 2.528   # weight in mg
+
+# --> Enter the path for saving figures within the quotes #
+# fig_save_path = r'/mnt/01D32FA04B3DCAD0/Thermal Runaway Sensor Data/02 Thermal Runaway/03 LFP Graphite cells/LFP Graphite cell data/03 LFP Graphite full cell'
+
+results_dir = r"/mnt/01D32FA04B3DCAD0/Thermal Runaway Sensor Data/02 Thermal Runaway/03 LFP Graphite cells/LFP Graphite cell data/03 LFP Graphite full cell plots/"
+
+os.chdir(path)
 
 # Reading multiple sheets at the same time
 # Creates a dictionary of dataframes
-data=pd.read_excel('CC48_2021-06-30_v1.xls',sheet_name=None)
+data=pd.read_excel(filename,sheet_name=None)
 
 # Reads the column headers from the first sheet
 column_header = data.get('Sheet1').columns
@@ -43,10 +59,10 @@ data = data.iloc[3:]
 data = data[~data.iloc[:,2].isin(['Step Type','Record ID'])]
 data = data.reset_index(drop=True) # Resetting index again because it may have changed due to the removal of redundant header rows
 
-# Change 'name', 'title' and 'active_material_weight' based on the data
-name = 'CC48'
-title = "LFP half cell "
-active_material_weight = 6.06   # weight in mg
+# # Change 'name', 'title' and 'active_material_weight' based on the data
+# name = 'CC52'
+# title = "LFP Graphite cell "
+# active_material_weight = 2.528   # weight in mg
 
 def get_step_data(data):
     # Modifying the extracted data
@@ -110,8 +126,8 @@ def get_step_data(data):
 
 def CapacityVsCycle(data,name):
     
-    a =4 # starting cycle; usually 3 formation cycles at 0.1 C. Therefore start from 3 
-    # a = 1
+    # a =4 # starting cycle; usually 3 formation cycles at 0.1 C. Therefore start from 3 
+    a = 1
     
     mod_data, charge_step_start, charge_step_end, discharge_step_start, discharge_step_end = get_step_data(data)
     
@@ -132,7 +148,7 @@ def CapacityVsCycle(data,name):
     ax1.plot(cycle[a:], charge_capacities[a:], marker='o', color='blue', markersize=3, linewidth=0, label="Charge capacity")
     ax1.plot(cycle[a:], discharge_capacities[a:], marker='o', color='maroon', markersize=3, linewidth=0, label="Discharge capacity")
     
-    # ax1.set_ylim(80,150) # for LFP
+    ax1.set_ylim(60,120) # for LFP
     # ax1.set_ylim(250,360) #for Graphite
     
     # ax1.set_ylim(1.5,2.5) # temp
@@ -143,7 +159,7 @@ def CapacityVsCycle(data,name):
 
     ax2.set_ylabel("Coulombic Efficiency", fontname='Times New Roman', fontsize=12)
     ax2.plot(cycle[a:], coulombic_efficiency[a:], marker='o', color='black', markersize=3, linewidth=0, label="Coulombic efficiency")
-    ax2.set_ylim(90,105)
+    ax2.set_ylim(90,100)
     
     ax2.set_yticks(np.linspace(ax2.get_ybound()[0], ax2.get_ybound()[1], 4))
 
@@ -154,7 +170,7 @@ def CapacityVsCycle(data,name):
     plt.title(title + name, loc='center', fontsize=18, fontweight=0)
     
     # plt.show()
-    plt.savefig('/home/jay/Desktop/LFP coin cell/' + name + '_1.png', dpi=300, bbox_inches="tight")
+    plt.savefig(results_dir + name + '_1.png', dpi=300, bbox_inches="tight")
     plt.clf()
     
 CapacityVsCycle(data,name)
@@ -172,10 +188,10 @@ def CapacityVsVoltage(data,name):
     # color = ['midnightblue', 'navy', 'darkblue', 'mediumblue', 'blue', 'slateblue', 'darkslateblue', 'mediumslateblue', 'mediumpurple', 'rebeccapurple', 'blueviolet']
     color = ['tab:blue','tab:orange','tab:green','tab:red','tab:purple','tab:brown','tab:pink','tab:gray','tab:olive','tab:cyan','b','g','r','c','m','y','k']
     
-    for i in cycle[4::step]:
+    for i in cycle[4:50:step]:
     # for i in cycle[1::step]:        
         voltage = mod_data.iloc[charge_step_start[i-1] : charge_step_end[i-1],5]
-        voltage = voltage/1000 # if Voltage column is in mV
+        # voltage = voltage/1000 # if Voltage column is in mV
         
         capacity = mod_data.iloc[charge_step_start[i-1] : charge_step_end[i-1],8]
         capacity = capacity/(active_material_weight/1000)
@@ -185,7 +201,7 @@ def CapacityVsVoltage(data,name):
         plt.legend(loc='lower right', frameon=False, prop={'size': 8})
         
         voltage = mod_data.iloc[discharge_step_start[i-1] : discharge_step_end[i-1],5]
-        voltage = voltage/1000 # if Voltage column is in mV
+        # voltage = voltage/1000 # if Voltage column is in mV
         
         capacity = mod_data.iloc[discharge_step_start[i-1] : discharge_step_end[i-1],8]
         capacity = capacity/(active_material_weight/1000)
@@ -197,8 +213,8 @@ def CapacityVsVoltage(data,name):
     plt.ylabel("Voltage (V)", fontname='Times New Roman', fontsize=12)
     
     # Plot scales for LFP
-    # plt.xlim(0,170) # for LFP
-    # plt.ylim(2,4) # for LFP
+    plt.xlim(0,170) # for LFP
+    plt.ylim(2,4) # for LFP
     
     # plt.xlim(0,4)  #temp
     
@@ -208,7 +224,7 @@ def CapacityVsVoltage(data,name):
     # plt.ylim(-0.1,2.25) # for Graphite
     
     # plt.show()
-    plt.savefig('/home/jay/Desktop/LFP coin cell/' + name + '_2.png', dpi=300, bbox_inches="tight")
+    plt.savefig(results_dir + name + '_2.png', dpi=300, bbox_inches="tight")
     # plt.savefig(name + '_2.png', dpi=300)
     plt.clf()
     
